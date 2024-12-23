@@ -1,59 +1,155 @@
-const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const path = require('path'); // Import the path module
-const connection = require(path.join(__dirname, '../../database/db')); // Use path.join to create the absolute path
+const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const path = require("path"); // Import the path module
+const connection = require(path.join(__dirname, "../../database/db")); // Use path.join to create the absolute path
 const router = express.Router();
 
 // User Registration
-router.post('/register', async (req, res) => {
-    console.log(req.body); // Log the request body
-    const { username, password, role } = req.body;
+router.post("/register", async (req, res) => {
+  console.log(req.body); // Log the request body
+  const { firstName, lastName, email, username, password, role } = req.body;
 
-    // Validate input
-    if (!username || !password || !role) {
-        return res.status(400).json({ error: 'All fields are required' });
-    }
+  // Validate input
+  if (!firstName || !lastName || !email || !username || !password || !role) {
+    return res.status(400).json({
+      success: false,
+      message: "All fields are required",
+    });
+  }
 
-    try {
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const query = 'INSERT INTO users (username, password, role) VALUES (?, ?, ?)';
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email format",
+    });
+  }
 
-        // Execute the query
-        connection.query(query, [username, hashedPassword, role], (err, results) => {
-            if (err) {
-                console.error('Error executing query:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            res.status(201).json({ id: results.insertId, username, role });
+  // Validate password strength
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters long",
+    });
+  }
+
+  try {
+    // Check if username already exists
+    const checkUser = "SELECT * FROM users WHERE username = ? OR email = ?";
+    connection.query(checkUser, [username, email], async (err, results) => {
+      if (err) {
+        console.error("Error checking existing user:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Database error",
         });
-    } catch (error) {
-        console.error('Error during registration:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+      }
+
+      if (results.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Username or email already exists",
+        });
+      }
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const query =
+        "INSERT INTO users (firstName, lastName, email, username, password, role) VALUES (?, ?, ?, ?, ?, ?)";
+
+      // Execute the query
+      connection.query(
+        query,
+        [firstName, lastName, email, username, hashedPassword, role],
+        (err, results) => {
+          if (err) {
+            console.error("Error executing query:", err);
+            return res.status(500).json({
+              success: false,
+              message: "Database error",
+            });
+          }
+          res.status(201).json({
+            success: true,
+            message: "Registration successful",
+            data: {
+              id: results.insertId,
+              username,
+              email,
+              role,
+            },
+          });
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Error during registration:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 });
 
 // User Login
-router.post('/login', (req, res) => {
-    const { username, password } = req.body;
+router.post("/login", (req, res) => {
+  const { username, password } = req.body;
 
-    const query = 'SELECT * FROM users WHERE username = ?';
-    connection.query(query, [username], async (err, results) => {
-        if (err || results.length === 0) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const user = results[0];
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials',success:false });
-        }
-
-        // Generate JWT token
-        const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
-        res.json({ token, message: 'user logged in successfully',success:true });
+  // Validate input
+  if (!username || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Username and password are required",
     });
+  }
+
+  const query = "SELECT * FROM users WHERE username = ?";
+  connection.query(query, [username], async (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Database error",
+      });
+    }
+
+    if (results.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const user = results[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      },
+      "your_jwt_secret",
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      userId: user.id,
+      role: user.role,
+    });
+  });
 });
 
 module.exports = router;
