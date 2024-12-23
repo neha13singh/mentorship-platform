@@ -15,15 +15,25 @@
                 const data = Object.fromEntries(formData);
                 const result = await loginUser(data);
                 alert(result.message || result.error);
-                if (result.token) {
+                if (result.success) {
                     localStorage.setItem('token', result.token);
-                    // Redirect to user dashboard or profile setup
+                    window.location.href = 'user-discovery.html'; // Redirect to user discovery page
                 }
             });
         });
     </script>
 </head>
 <body>
+    <header>
+        <h1>Welcome to the Mentorship Matching Platform</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="register.html">Register</a></li>
+              
+            </ul>
+        </nav>
+    </header>
     <h1>Login</h1>
     <form id="loginForm">
         <input type="text" name="username" placeholder="Username" required>

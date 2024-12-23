@@ -6,19 +6,19 @@ const router = express.Router();
 
 // Create or Update Profile
 router.post('/', (req, res) => {
-    const { userId, skills, interests, bio } = req.body;
+    const { user_id, skills, interests, bio } = req.body;
 
     const query = `
         INSERT INTO profiles (user_id, skills, interests, bio)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE skills = ?, interests = ?, bio = ?
     `;
-    connection.query(query, [userId, skills, interests, bio, skills, interests, bio], (err, results) => {
+    connection.query(query, [user_id, skills, interests, bio, skills, interests, bio], (err, results) => {
         if (err) {
             console.error('Error executing query:', err);
-            return res.status(500).json({ error: 'Database error' });
+            return res.status(500).json({ error: 'Database error', success: false });
         }
-        res.status(200).json({ message: 'Profile saved successfully' });
+        res.status(200).json({ message: 'Profile saved successfully', success: true });
     });
 });
 
@@ -45,6 +45,28 @@ router.get('/', (req, res) => {
             return res.status(500).json({ error: 'Database error' });
         }
         res.status(200).json(results);
+    });
+});
+
+// Update User Profile
+router.post('/profile', (req, res) => {
+    const { user_id, skills, interests, bio } = req.body;
+
+    const query = `
+        UPDATE profiles
+        SET skills = ?, interests = ?, bio = ?
+        WHERE user_id = ?
+    `;
+    connection.query(query, [skills, interests, bio, user_id], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        if (results.affectedRows > 0) {
+            res.status(200).json({ success: true, message: 'Profile updated successfully' });
+        } else {
+            res.status(404).json({ success: false, message: 'Profile not found' });
+        }
     });
 });
 

@@ -7,14 +7,29 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <header>
+        <h1>Welcome to the Mentorship Matching Platform</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="profile-setup.html">Profile Setup</a></li>
+                <li><a href="user-discovery.html">User Discovery</a></li>
+            </ul>
+        </nav>
+    </header>
     <h1>Profile Setup</h1>
     <form id="profileForm">
         <input type="text" name="skills" placeholder="Skills" required>
         <input type="text" name="interests" placeholder="Interests" required>
         <textarea name="bio" placeholder="Bio"></textarea>
+        <input type="hidden" name="user_id" id="user_id">
         <button type="submit">Save Profile</button>
     </form>
     <script>
+        document.getElementById('user_id').value = localStorage.getItem('user_id');
+
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -28,7 +43,11 @@
                 body: JSON.stringify(data),
             });
             const result = await response.json();
-            alert(result.message || result.error);
+            if (result.success) {
+                window.location.href = 'login.html'; // Redirect to login page
+            } else {
+                alert(result.message || result.error);
+            }
         });
     </script>
 </body>

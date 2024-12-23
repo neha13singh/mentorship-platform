@@ -16,7 +16,9 @@ async function registerUser(data) {
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
-    return response.json(); // Parse the JSON response
+    const result = await response.json(); // Parse the JSON response
+    console.log(result); // Log the result to see what is returned
+    return result;
 }
 
 // Function to log in a user

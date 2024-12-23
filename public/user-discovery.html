@@ -5,18 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Discovery</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module">
-        import { fetchUsers } from './api.js';
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api'; // Base URL for API calls
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const users = await fetchUsers('mentor'); // or 'mentee'
+            const userId = localStorage.getItem('user_id'); // Get the logged-in user's ID
+            const users = await fetchAllUsers(); // Fetch all users
+            const connections = await fetchUserConnections(userId); // Fetch connected users
+
+            // Fetch the logged-in user's details to filter by username
+            const loggedInUserResponse = await fetch(`${API_BASE_URL}/mentorship/${userId}`);
+            const loggedInUser = await loggedInUserResponse.json();
+
+            // Filter out the logged-in user based on username
+            const filteredUsers = users.filter(user => user.username !== loggedInUser.username);
+
             const userList = document.getElementById('userList');
-            userList.innerHTML = users.map(user => `<div>${user.username} - ${user.skills}</div>`).join('');
+
+            userList.innerHTML = filteredUsers.map(user => {
+                const hasPendingRequest = connections.some(conn => conn.to_user_id === user.id && conn.status === 'pending');
+
+                return `
+                    <div class="user-card">
+                        <h3>${user.username} - ${user.role}</h3>
+                        <p><strong>Skills:</strong> ${user.skills || 'N/A'}</p>
+                        <p><strong>Interests:</strong> ${user.interests || 'N/A'}</p>
+                        <p><strong>Bio:</strong> ${user.bio || 'N/A'}</p>
+                        ${hasPendingRequest ? 
+                            `<p>Status: Request Sent</p>` : 
+                            `<button onclick="sendRequest(${user.id}, this)">Send Request</button>`
+                        }
+                    </div>
+                `;
+            }).join('');
         });
+
+        async function fetchAllUsers() {
+            const response = await fetch(`${API_BASE_URL}/mentorship/users`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+            const users = await response.json();
+            return users;
+        }
+
+        async function fetchUserConnections(userId) {
+            const response = await fetch(`${API_BASE_URL}/mentorship/${userId}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+            const connections = await response.json();
+            return connections;
+        }
+
+        async function sendRequest(toUserId, button) {
+            const fromUserId = localStorage.getItem('user_id'); // Get the logged-in user's ID
+            const response = await fetch(`${API_BASE_URL}/mentorship/request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fromUserId, toUserId }),
+            });
+            const result = await response.json();
+            alert(result.message || result.error);
+
+            // Change button text to indicate request has been sent
+            if (result.success) {
+                button.textContent = 'Request Sent';
+                button.disabled = true; // Disable the button after sending the request
+            }
+        }
     </script>
 </head>
 <body>
-    <h1>User Discovery</h1>
-    <div id="userList"></div>
+    <header>
+        <h1>Welcome to the Mentorship Matching Platform</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><button onclick="window.location.href='edit-profile.html'">Edit Profile</button></li>
+                <li><a href="user-discovery.html">User Discovery</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Find Your Mentor or Mentee</h2>
+        <div id="userList"></div>
+    </main>
+    <footer>
+        <p>&copy; 2023 Mentorship Matching Platform</p>
+    </footer>
 </body>
 </html>

@@ -7,6 +7,7 @@ const router = express.Router();
 
 // User Registration
 router.post('/register', async (req, res) => {
+    console.log(req.body); // Log the request body
     const { username, password, role } = req.body;
 
     // Validate input
@@ -46,12 +47,12 @@ router.post('/login', (req, res) => {
         const user = results[0];
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid credentials',success:false });
         }
 
         // Generate JWT token
         const token = jwt.sign({ id: user.id }, 'your_jwt_secret', { expiresIn: '1h' });
-        res.json({ token });
+        res.json({ token, message: 'user logged in successfully',success:true });
     });
 });
 
