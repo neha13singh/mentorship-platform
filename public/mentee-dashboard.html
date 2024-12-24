@@ -11,38 +11,28 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const userId = localStorage.getItem('user_id');
             const mentors = await fetchMentors();
-            const acceptedRequests = await fetchAcceptedRequests(userId);
             const mentorList = document.getElementById('mentorList');
-            const acceptedList = document.getElementById('acceptedList');
 
             console.log(mentors); // Log the fetched mentors
-            mentorList.innerHTML = mentors.map(mentor => `
-                <div class="mentor-card">
-                    <h3>${mentor.username} - ${mentor.role}</h3>
-                    <button onclick="sendRequest(${mentor.id})">Send Request</button>
-                </div>
-            `).join('');
-
-            // Display accepted requests
-            acceptedList.innerHTML = acceptedRequests.map(request => `
-                <div class="request-card">
-                    <h3>Accepted Request from: ${request.requestor_user_id}</h3>
-                </div>
-            `).join('');
+            mentorList.innerHTML = mentors.map(mentor => {
+                const skillsArray = Array.isArray(mentor.skills) ? mentor.skills : mentor.skills.split(','); // Convert to array if it's a string
+                const interestsArray = Array.isArray(mentor.interests) ? mentor.interests : mentor.interests.split(','); // Convert to array if it's a string
+                return `
+                    <div class="mentor-card">
+                        <h3>${mentor.username} - ${mentor.role}</h3>
+                        <p>Bio: ${mentor.bio}</p>
+                        <p>Skills: ${skillsArray.join(', ')}</p>
+                        <p>Interests: ${interestsArray.join(', ')}</p>
+                        <button onclick="sendRequest(${mentor.id})">Send Request</button>
+                    </div>
+                `;
+            }).join('');
         });
 
         async function fetchMentors() {
             const response = await fetch(`${API_BASE_URL}/mentorship/users`);
             if (!response.ok) {
                 throw new Error('Failed to fetch mentors');
-            }
-            return response.json();
-        }
-
-        async function fetchAcceptedRequests(userId) {
-            const response = await fetch(`${API_BASE_URL}/mentorship/accepted-mentors/${userId}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch accepted requests');
             }
             return response.json();
         }
@@ -68,8 +58,6 @@
     <main>
         <h2>Available Mentors</h2>
         <div id="mentorList"></div>
-        <h2>Accepted Requests</h2>
-        <div id="acceptedList"></div>
     </main>
     <footer>
         <p>&copy; 2023 Mentorship Matching Platform</p>
