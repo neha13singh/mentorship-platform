@@ -36,14 +36,14 @@ router.post("/register", async (req, res) => {
   }
 
   try {
-    // Check if username already exists
-    const checkUser = "SELECT * FROM users WHERE username = ? OR email = ?";
+    // Check if username or email already exists
+    const checkUser = "SELECT * FROM user WHERE username = ? OR email = ?";
     connection.query(checkUser, [username, email], async (err, results) => {
       if (err) {
         console.error("Error checking existing user:", err);
         return res.status(500).json({
           success: false,
-          message: "Database error",
+          message: "Database error: " + err.message,
         });
       }
 
@@ -57,7 +57,7 @@ router.post("/register", async (req, res) => {
       // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
       const query =
-        "INSERT INTO users (firstName, lastName, email, username, password, role) VALUES (?, ?, ?, ?, ?, ?)";
+        "INSERT INTO user (first_name, last_name, email, username, password, role) VALUES (?, ?, ?, ?, ?, ?)";
 
       // Execute the query
       connection.query(
@@ -68,7 +68,7 @@ router.post("/register", async (req, res) => {
             console.error("Error executing query:", err);
             return res.status(500).json({
               success: false,
-              message: "Database error",
+              message: "Database error: " + err.message,
             });
           }
           res.status(201).json({
@@ -85,10 +85,10 @@ router.post("/register", async (req, res) => {
       );
     });
   } catch (error) {
-    console.error("Error during registration:", error);
+    console.error("Unexpected error:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "Unexpected server error: " + error.message,
     });
   }
 });
@@ -105,7 +105,7 @@ router.post("/login", (req, res) => {
     });
   }
 
-  const query = "SELECT * FROM users WHERE username = ?";
+  const query = "SELECT * FROM user WHERE username = ?";
   connection.query(query, [username], async (err, results) => {
     if (err) {
       console.error("Database error:", err);

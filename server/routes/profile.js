@@ -9,25 +9,27 @@ router.post("/", async (req, res) => {
     const { user_id, skills, interests, bio, is_public } = req.body;
 
     const query = `
-            INSERT INTO profile (user_id, skills, interests, bio, is_public)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO profile (user_id, bio, interests, skills, is_public)
+            VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
-                skills = VALUES(skills),
+                bio = VALUES(bio),
                 interests = VALUES(interests),
-                bio = VALUES(bio)
+                skills = VALUES(skills),
+                is_public = VALUES(is_public);
         `;
 
     const [result] = await connection
       .promise()
-      .query(query, [user_id, skills, interests, bio]);
+      .query(query, [user_id, bio, interests, skills, is_public]);
 
     res.status(200).json({
       success: true,
       message: "Profile saved successfully",
       data: {
-        skills,
-        interests,
+        user_id,
         bio,
+        interests,
+        skills,
         is_public,
       },
     });
@@ -100,6 +102,24 @@ router.get("/:userId", async (req, res) => {
       message: "Failed to fetch profile",
     });
   }
+});
+
+router.post("/profile", (req, res) => {
+  const { userId, skills, interests, bio } = req.body;
+
+  // Validate input
+  if (!userId || !skills || !interests || !bio) {
+    return res.status(400).json({ success: false, message: "All fields are required." });
+  }
+
+  const query = "INSERT INTO profile (user_id, skills, interests, bio) VALUES (?, ?, ?, ?)";
+  connection.query(query, [userId, skills, interests, bio], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).json({ success: false, message: "Database error: " + err.message });
+    }
+    res.status(201).json({ success: true, message: "Profile created successfully." });
+  });
 });
 
 module.exports = router;

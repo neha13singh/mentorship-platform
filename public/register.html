@@ -12,11 +12,19 @@
             document.getElementById('registerForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData);
+                const data = {
+                    firstName: formData.get('first_name'),
+                    lastName: formData.get('last_name'),
+                    username: formData.get('username'),
+                    email: formData.get('email'),
+                    password: formData.get('password'),
+                    role: formData.get('role')
+                };
+                console.log('Data being sent:', data);
                 const result = await registerUser(data);
                 alert(result.message || result.error);
-                if (result.id) {
-                    localStorage.setItem('user_id', result.id);
+                if (result.data && result.data.id) {
+                    localStorage.setItem('user_id', result.data.id);
                     window.location.href = 'profile-setup.html';
                 }
             });
@@ -29,13 +37,15 @@
         <nav>
             <ul>
                 <li><a href="index.html">Home</a></li>
-               
             </ul>
         </nav>
     </header>
     <h1>Register</h1>
     <form id="registerForm">
+        <input type="text" name="first_name" placeholder="First Name" required>
+        <input type="text" name="last_name" placeholder="Last Name" required>
         <input type="text" name="username" placeholder="Username" required>
+        <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>
         <select name="role" required>
             <option value="mentor">Mentor</option>
