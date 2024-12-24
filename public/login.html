@@ -9,12 +9,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
       rel="stylesheet"
     />
-    <link
-      ref="stylesheet"
-      type="text/css"
-      href="./SnackBar-master/dist/snackbar.min.css"
-    />
-    <script src="./SnackBar-master/dist/snackbar.min.js"></script>
 
     <style>
       .auth-container {
@@ -393,12 +387,7 @@
           try {
             const result = await loginUser(data);
             if (result.success) {
-              Snackbar.show({
-                text: result.message,
-                backgroundColor: "#4CAF50",
-                duration: 3000,
-                pos: "top-center",
-              });
+              alert(result.message);
               localStorage.setItem("token", result.token);
               localStorage.setItem("userId", result.userId);
               localStorage.setItem("role", result.role);
@@ -408,12 +397,7 @@
               }, 1000);
             }
           } catch (error) {
-            Snackbar.show({
-              text: error.message || "Login failed",
-              backgroundColor: "#F44336",
-              duration: 3000,
-              pos: "top-center",
-            });
+            alert(error.message || "Login failed");
           }
         });
 
@@ -425,12 +409,7 @@
           const selectedRole = document.querySelector(".role-option.selected");
 
           if (!selectedRole) {
-            Snackbar.show({
-              text: "Please select a role",
-              backgroundColor: "#F44336",
-              duration: 3000,
-              pos: "top-center",
-            });
+            alert("Please select a role");
             return;
           }
 
@@ -439,23 +418,13 @@
           try {
             const result = await registerUser(data);
             if (result.success) {
-              Snackbar.show({
-                text: "Registration successful! Please login.",
-                backgroundColor: "#4CAF50",
-                duration: 3000,
-                pos: "top-center",
-              });
+              alert("Registration successful! Please login.");
               setTimeout(() => {
                 loginToggle.click();
               }, 1000);
             }
           } catch (error) {
-            Snackbar.show({
-              text: error.message || "Registration failed",
-              backgroundColor: "#F44336",
-              duration: 3000,
-              pos: "top-center",
-            });
+            alert(error.message || "Registration failed");
           }
         });
       });
