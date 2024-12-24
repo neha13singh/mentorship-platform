@@ -10,7 +10,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             const userId = localStorage.getItem('user_id'); // Get the logged-in user's ID
-            const users = await fetchAllUsers(); // Fetch all users
+            const mentors = await fetchAllMentors(); // Fetch all mentors
             const connections = await fetchUserConnections(userId); // Fetch connected users
 
             // Fetch the logged-in user's details to filter by username
@@ -18,36 +18,35 @@
             const loggedInUser = await loggedInUserResponse.json();
 
             // Filter out the logged-in user based on username
-            const filteredUsers = users.filter(user => user.username !== loggedInUser.username);
+            const filteredMentors = mentors.filter(mentor => mentor.username !== loggedInUser.username);
 
-            const userList = document.getElementById('userList');
+            const mentorList = document.getElementById('mentorList');
 
-            userList.innerHTML = filteredUsers.map(user => {
-                const hasPendingRequest = connections.some(conn => conn.to_user_id === user.id && conn.status === 'pending');
+            mentorList.innerHTML = filteredMentors.map(mentor => {
+                const hasPendingRequest = connections.some(conn => conn.to_user_id === mentor.id && conn.status === 'pending');
 
                 return `
-                    <div class="user-card">
-                        <h3>${user.username} - ${user.role}</h3>
-                        <p><strong>Skills:</strong> ${user.skills || 'N/A'}</p>
-                        <p><strong>Interests:</strong> ${user.interests || 'N/A'}</p>
-                        <p><strong>Bio:</strong> ${user.bio || 'N/A'}</p>
+                    <div class="mentor-card">
+                        <h3>${mentor.username} - ${mentor.role}</h3>
+                        <p><strong>Skills:</strong> ${mentor.skills || 'N/A'}</p>
+                        <p><strong>Interests:</strong> ${mentor.interests || 'N/A'}</p>
+                        <p><strong>Bio:</strong> ${mentor.bio || 'N/A'}</p>
                         ${hasPendingRequest ? 
                             `<p>Status: Request Sent</p>` : 
-                            `<button onclick="sendRequest(${user.id}, this)">Send Request</button>`
+                            `<button onclick="sendRequest(${mentor.id}, this)">Send Request</button>`
                         }
                     </div>
                 `;
             }).join('');
         });
 
-        async function fetchAllUsers() {
+        async function fetchAllMentors() {
             const response = await fetch(`${API_BASE_URL}/mentorship/users`);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
             }
-            const users = await response.json();
-            return users;
+            return response.json();
         }
 
         async function fetchUserConnections(userId) {
@@ -56,8 +55,7 @@
                 const errorText = await response.text();
                 throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
             }
-            const connections = await response.json();
-            return connections;
+            return response.json();
         }
 
         async function sendRequest(toUserId, button) {
@@ -94,8 +92,8 @@
         </nav>
     </header>
     <main>
-        <h2>Find Your Mentor or Mentee</h2>
-        <div id="userList"></div>
+        <h2>Find Your Mentor</h2>
+        <div id="mentorList"></div>
     </main>
     <footer>
         <p>&copy; 2023 Mentorship Matching Platform</p>

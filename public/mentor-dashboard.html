@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentor Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userId = localStorage.getItem('user_id');
+            const mentees = await fetchMentees(userId);
+            const menteeList = document.getElementById('menteeList');
+
+            // Log fetched mentees
+            console.log(mentees);
+
+            // Display all mentees details
+            menteeList.innerHTML = mentees.map(mentee => {
+                const skillsArray = Array.isArray(mentee.skills) ? mentee.skills : mentee.skills.split(','); // Convert to array if it's a string
+                const interestsArray = Array.isArray(mentee.interests) ? mentee.interests : mentee.interests.split(','); // Convert to array if it's a string
+                return `
+                    <div class="mentee-card">
+                        <h3>${mentee.username} - ${mentee.role}</h3>
+                        <p>Bio: ${mentee.bio}</p>
+                        <p>Skills: ${skillsArray.join(', ')}</p>
+                        <p>Interests: ${interestsArray.join(', ')}</p>
+                        <p>Status: ${mentee.status ? 'Requested' : 'Not Requested'}</p>
+                    </div>
+                `;
+            }).join('');
+        });
+
+        async function fetchMentees(userId) {
+            const response = await fetch(`${API_BASE_URL}/mentorship/mentees/${userId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch mentees');
+            }
+            return response.json();
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Mentor Dashboard</h1>
+    </header>
+    <main>
+        <h2>Mentees</h2>
+        <div id="menteeList"></div>
+    </main>
+    <footer>
+        <p>&copy; 2023 Mentorship Matching Platform</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentee Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userId = localStorage.getItem('user_id');
+            const mentors = await fetchMentors();
+            const acceptedRequests = await fetchAcceptedRequests(userId);
+            const mentorList = document.getElementById('mentorList');
+            const acceptedList = document.getElementById('acceptedList');
+
+            console.log(mentors); // Log the fetched mentors
+            mentorList.innerHTML = mentors.map(mentor => `
+                <div class="mentor-card">
+                    <h3>${mentor.username} - ${mentor.role}</h3>
+                    <button onclick="sendRequest(${mentor.id})">Send Request</button>
+                </div>
+            `).join('');
+
+            // Display accepted requests
+            acceptedList.innerHTML = acceptedRequests.map(request => `
+                <div class="request-card">
+                    <h3>Accepted Request from: ${request.requestor_user_id}</h3>
+                </div>
+            `).join('');
+        });
+
+        async function fetchMentors() {
+            const response = await fetch(`${API_BASE_URL}/mentorship/users`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch mentors');
+            }
+            return response.json();
+        }
+
+        async function fetchAcceptedRequests(userId) {
+            const response = await fetch(`${API_BASE_URL}/mentorship/accepted-mentors/${userId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch accepted requests');
+            }
+            return response.json();
+        }
+
+        async function sendRequest(toUserId) {
+            const fromUserId = localStorage.getItem('user_id');
+            const response = await fetch(`${API_BASE_URL}/mentorship/request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: toUserId, requestor_user_id: fromUserId, message: 'Request for mentorship' }),
+            });
+            const result = await response.json();
+            alert(result.message);
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Mentee Dashboard</h1>
+    </header>
+    <main>
+        <h2>Available Mentors</h2>
+        <div id="mentorList"></div>
+        <h2>Accepted Requests</h2>
+        <div id="acceptedList"></div>
+    </main>
+    <footer>
+        <p>&copy; 2023 Mentorship Matching Platform</p>
+    </footer>
+</body>
+</html>

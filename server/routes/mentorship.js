@@ -3,7 +3,7 @@ const path = require("path");
 const connection = require(path.join(__dirname, "../../database/db"));
 const router = express.Router();
 
-// Get All Users with Profiles
+// Get All Users with Profiles // will be used for user discovery
 router.get("/users", (req, res) => {
   const query = `
         SELECT u.id, u.username, u.role, p.skills, p.interests, p.bio 
@@ -20,7 +20,7 @@ router.get("/users", (req, res) => {
   });
 });
 
-// Send Mentorship Request
+// Send Mentorship Request // user discovery
 router.post("/request", (req, res) => {
   const { user_id, requestor_user_id, message } = req.body;
 
@@ -41,7 +41,7 @@ router.post("/request", (req, res) => {
   );
 });
 
-// Get User's Mentorship Requests
+// Get User's Mentorship Requests // mentor dashboard
 router.get("/requests/:userId", (req, res) => {
   const { userId } = req.params;
 
@@ -60,7 +60,7 @@ router.get("/requests/:userId", (req, res) => {
   });
 });
 
-// Get User's Sent Requests
+// Get User's Sent Requests // mentee dashboard
 router.get("/sent-requests/:userId", (req, res) => {
   const { userId } = req.params;
 
@@ -79,7 +79,7 @@ router.get("/sent-requests/:userId", (req, res) => {
   });
 });
 
-// Accept Mentorship Request
+// Accept Mentorship Request // mentor dashboard
 router.post("/accept", (req, res) => {
   const { requestId } = req.body;
 
@@ -188,11 +188,46 @@ router.get("/mentees/:userId", (req, res) => {
   const { userId } = req.params;
 
   const query = `
+        SELECT u.id, u.username, u.role, p.bio, p.skills, p.interests, r.status
+        FROM user u
+        JOIN profile p ON u.id = p.user_id
+        LEFT JOIN mentor_request_list r ON u.id = r.user_id AND r.requestor_user_id = '4'
+        WHERE u.role = 'mentee'
+    `;
+  connection.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// Get User's Connections
+router.get('/:userId', (req, res) => {
+  const { userId } = req.params;
+  const query = 'SELECT * FROM connections WHERE user_id = ?'; // Adjust the query as needed
+  connection.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: "No connections found for this user." });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// Get Accepted Mentors for a Mentee
+router.get("/accepted-mentors/:userId", (req, res) => {
+  const { userId } = req.params;
+  const query = `
         SELECT m.*, u.username, u.role, p.bio, p.skills, p.interests
         FROM mentor_accepted_list m
-        JOIN user u ON m.user_id = u.id
+        JOIN user u ON m.mentor_user_id = u.id
         LEFT JOIN profile p ON u.id = p.user_id
-        WHERE m.mentor_user_id = ?
+        WHERE m.user_id = ?
     `;
   connection.query(query, [userId], (err, results) => {
     if (err) {
