@@ -12,14 +12,13 @@
             const userId = localStorage.getItem('user_id');
             const mentees = await fetchMentees(userId);
             const menteeList = document.getElementById('menteeList');
+            const requests = await fetchRequests(userId);
+            const requestList = document.getElementById('requestList');
 
-            // Log fetched mentees
-            console.log(mentees);
-
-            // Display all mentees details
+            // Display mentees
             menteeList.innerHTML = mentees.map(mentee => {
-                const skillsArray = Array.isArray(mentee.skills) ? mentee.skills : mentee.skills.split(','); // Convert to array if it's a string
-                const interestsArray = Array.isArray(mentee.interests) ? mentee.interests : mentee.interests.split(','); // Convert to array if it's a string
+                const skillsArray = Array.isArray(mentee.skills) ? mentee.skills : mentee.skills ? mentee.skills.split(',') : [];
+                const interestsArray = Array.isArray(mentee.interests) ? mentee.interests : mentee.interests ? mentee.interests.split(',') : [];
                 return `
                     <div class="mentee-card">
                         <h3>${mentee.username} - ${mentee.role}</h3>
@@ -27,6 +26,18 @@
                         <p>Skills: ${skillsArray.join(', ')}</p>
                         <p>Interests: ${interestsArray.join(', ')}</p>
                         <p>Status: ${mentee.status ? 'Requested' : 'Not Requested'}</p>
+                    </div>
+                `;
+            }).join('');
+
+            // Display requests
+            requestList.innerHTML = requests.map(request => {
+                return `
+                    <div class="request-card">
+                        <h3>${request.requestor_username} - ${request.requestor_role}</h3>
+                        <p>Message: ${request.message}</p>
+                        <button onclick="acceptRequest(${request.id})">Accept</button>
+                        <button onclick="rejectRequest(${request.id})">Reject</button>
                     </div>
                 `;
             }).join('');
@@ -39,6 +50,40 @@
             }
             return response.json();
         }
+
+        async function fetchRequests(userId) {
+            const response = await fetch(`${API_BASE_URL}/mentorship/requests/${userId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch requests');
+            }
+            return response.json();
+        }
+
+        async function acceptRequest(requestId) {
+            const response = await fetch(`${API_BASE_URL}/mentorship/accept`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ requestId }),
+            });
+            const result = await response.json();
+            alert(result.message);
+            location.reload(); // Refresh the page to see updated requests
+        }
+
+        async function rejectRequest(requestId) {
+            const response = await fetch(`${API_BASE_URL}/mentorship/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ requestId }),
+            });
+            const result = await response.json();
+            alert(result.message);
+            location.reload(); // Refresh the page to see updated requests
+        }
     </script>
 </head>
 <body>
@@ -48,6 +93,8 @@
     <main>
         <h2>Mentees</h2>
         <div id="menteeList"></div>
+        <h2>Mentee Requests</h2>
+        <div id="requestList"></div>
     </main>
     <footer>
         <p>&copy; 2023 Mentorship Matching Platform</p>

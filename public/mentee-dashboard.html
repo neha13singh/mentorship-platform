@@ -13,16 +13,14 @@
             const mentors = await fetchMentors();
             const mentorList = document.getElementById('mentorList');
 
-            console.log(mentors); // Log the fetched mentors
+            // Display mentors
             mentorList.innerHTML = mentors.map(mentor => {
-                const skillsArray = Array.isArray(mentor.skills) ? mentor.skills : mentor.skills.split(','); // Convert to array if it's a string
-                const interestsArray = Array.isArray(mentor.interests) ? mentor.interests : mentor.interests.split(','); // Convert to array if it's a string
                 return `
                     <div class="mentor-card">
                         <h3>${mentor.username} - ${mentor.role}</h3>
                         <p>Bio: ${mentor.bio}</p>
-                        <p>Skills: ${skillsArray.join(', ')}</p>
-                        <p>Interests: ${interestsArray.join(', ')}</p>
+                        <p>Skills: ${Array.isArray(mentor.skills) ? mentor.skills.join(', ') : mentor.skills}</p>
+                        <p>Interests: ${Array.isArray(mentor.interests) ? mentor.interests.join(', ') : mentor.interests}</p>
                         <button onclick="sendRequest(${mentor.id})">Send Request</button>
                     </div>
                 `;
@@ -48,12 +46,13 @@
             });
             const result = await response.json();
             alert(result.message);
+            location.reload(); // Refresh the page to see updated requests
         }
     </script>
 </head>
 <body>
     <header>
-        <h1>Mentee Dashboard</h1>
+        <h1>Mentee Dashboard</h1>~
     </header>
     <main>
         <h2>Available Mentors</h2>
