@@ -9,7 +9,15 @@
         const API_BASE_URL = 'http://localhost:3000/api';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const userId = localStorage.getItem('user_id');
+            const userId = localStorage.getItem('userId');
+            const username = localStorage.getItem('username'); // Retrieve username
+            const role = localStorage.getItem('role'); // Retrieve role
+
+            // Display user info at the top
+            const userInfo = document.createElement('h2');
+            userInfo.innerText = `Logged in as: ${username || 'Guest'} (${role})`; // Fallback to 'Guest' if username is undefined
+            document.body.insertBefore(userInfo, document.querySelector('main'));
+
             const mentees = await fetchMentees(userId);
             const menteeList = document.getElementById('menteeList');
             const requests = await fetchRequests(userId);

@@ -116,35 +116,29 @@
           const formData = new FormData(e.target);
           const data = Object.fromEntries(formData);
 
+          console.log("Logging in with data:", data); // Log the data being sent
+
           try {
             const result = await loginUser(data);
+            console.log("API Response:", result); // Log the API response
             if (result.success) {
-              Snackbar.show({
-                text: result.message,
-                backgroundColor: "#4CAF50",
-                duration: 3000,
-                pos: "top-center",
-              });
               localStorage.setItem("token", result.token);
               localStorage.setItem("userId", result.userId);
               localStorage.setItem("role", result.role);
+              localStorage.setItem("username", result.username); // Store username
 
               setTimeout(() => {
-                // Redirect based on role
                 if (result.role === 'mentee') {
-                  window.location.href = 'mentee-dashboard.html'; // Redirect to Mentee Dashboard
+                  window.location.href = 'mentee-dashboard.html';
                 } else if (result.role === 'mentor') {
-                  window.location.href = 'mentor-dashboard.html'; // Redirect to Mentor Dashboard
+                  window.location.href = 'mentor-dashboard.html';
                 }
               }, 1000);
+            } else {
+              console.error("Login failed:", result.message);
             }
           } catch (error) {
-            Snackbar.show({
-              text: error.message || "Login failed",
-              backgroundColor: "#F44336",
-              duration: 3000,
-              pos: "top-center",
-            });
+            console.error("Login error:", error);
           }
         });
       });

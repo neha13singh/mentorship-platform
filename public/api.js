@@ -23,6 +23,7 @@ async function registerUser(data) {
 
 // Function to log in a user
 async function loginUser(data) {
+    console.log("Logging in with data:", data); // Log the data being sent
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -30,7 +31,10 @@ async function loginUser(data) {
         },
         body: JSON.stringify(data),
     });
-    return response.json();
+
+    const result = await response.json(); // Parse the JSON response
+    console.log("API Response:", result); // Log the API response
+    return result; // Ensure the result includes username
 }
 
 // Function to fetch users by role
